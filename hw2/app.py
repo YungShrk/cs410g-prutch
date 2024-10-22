@@ -1,7 +1,8 @@
 import os
 from langchain.agents import initialize_agent, AgentType, Tool
 from langchain.llms import OpenAI
-from langchain.tools import TerminalTool, BaseTool
+from langchain.tools.terminal.tool import TerminalTool
+from langchain.tools import BaseTool
 from langchain.utilities import WolframAlphaAPIWrapper
 
 class PigLatinTranslatorTool(BaseTool):
