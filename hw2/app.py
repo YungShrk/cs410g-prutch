@@ -22,7 +22,20 @@ class PigLatinTranslatorTool(BaseTool):
         Returns:
             str: The translated Pig Latin text.
         """
+        if not text:
+            return "No text provided for translation."
         def pig_latin(word):
+            """
+            Translates a single word into Pig Latin.
+
+            Args:
+                word (str): The word to translate.
+
+            Returns:
+                str: The translated word.
+            """
+            if not word.isalpha():
+                return word
             first_letter = word[0]
             if first_letter.lower() in 'aeiou':
                 return word + 'yay'
@@ -81,10 +94,20 @@ def main():
         verbose=True
     )
 
-    # Example queries
+    # Example queries demonstrating the agent's capabilities
+    print("=== Wolfram Alpha Tool ===")
     print(agent.run("What is the derivative of sin(x)?"))
+
+    print("\n=== Pig Latin Translator Tool ===")
+    # Valid input
     print(agent.run("Translate 'Hello world' into Pig Latin"))
+    # Invalid input (empty string)
+    print(agent.run("Translate '' into Pig Latin"))
+
+    print("\n=== Terminal Tool ===")
     print(agent.run("List all files in the current directory"))
+    # Attempting to run a disallowed command
+    print(agent.run("Delete all files in the current directory"))
 
 if __name__ == "__main__":
     main()
