@@ -46,6 +46,11 @@ def main():
     Main function to initialize the agent and run queries.
     """
 
+    # Ensure OpenAI API key is set
+    openai_api_key = os.environ.get('OPENAI_API_KEY')
+    if not openai_api_key:
+        raise ValueError("Please set the OPENAI_API_KEY environment variable.")
+
     # Set up OpenAI LLM
     llm = OpenAI(temperature=0)
 
