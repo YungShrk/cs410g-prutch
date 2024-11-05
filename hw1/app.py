@@ -43,3 +43,49 @@ urls = [
     "https://www.pdx.edu/computer-science/"
 ]
 
+# Document loading functions
+def load_documents_from_folder(folder_path):
+    """
+    Load documents from a specified folder.
+    Args:
+        folder_path (str): Path to the folder containing documents.
+    """
+    print(f"Loading documents from folder: {folder_path}...")
+    docs = DirectoryLoader(folder_path).load()
+    process_documents(docs)
+
+def load_urls(urls):
+    """
+    Load documents from a list of URLs asynchronously.
+    Args:
+        urls (list): List of URLs to load.
+    """
+    docs = AsyncHtmlLoader(urls).load()
+    process_documents(docs)
+
+def load_wikipedia_articles(query, max_docs=20):
+    """
+    Load Wikipedia articles based on a search query.
+    Args:
+        query (str): Search term for Wikipedia articles.
+        max_docs (int): Maximum number of articles to load.
+    """
+    print(f"Loading up to {max_docs} Wikipedia articles for query: '{query}'...")
+    docs = WikipediaLoader(query=query, load_max_docs=max_docs).load()
+    if docs:
+        print(f"Loaded {len(docs)} articles for '{query}'.")
+        process_documents(docs)
+    else:
+        print(f"No articles found for query: {query}")
+
+# Function for processing documents
+def process_documents(docs):
+    """
+    Split documents into smaller chunks and add to vector store.
+    Args:
+        docs (list): List of Document objects to process.
+    """
+    text_splitter = TokenTextSplitter(chunk_size=1000, chunk_overlap=100)
+    chunks = text_splitter.split_documents(docs)
+    vectorstore.add_documents(documents=chunks)
+
