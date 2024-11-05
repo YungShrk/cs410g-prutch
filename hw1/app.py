@@ -1,10 +1,15 @@
-# Imports from LangChain and standard Python libraries
 from langchain import hub  # LangChain Hub for loading prompt templates
 from langchain.text_splitter import TokenTextSplitter  # Splits documents into smaller chunks for processing
 from langchain_chroma import Chroma  # Updated import path for Chroma vector storage
 from langchain_core.output_parsers import StrOutputParser  # Output parser for formatting LLM responses
 from langchain_core.runnables import RunnablePassthrough  # Pass-through operation for chain elements
 from langchain_google_genai import GoogleGenerativeAI, GoogleGenerativeAIEmbeddings  # Google Generative AI wrapper for LLM and embeddings
+
+from langchain_community.document_loaders import (
+    AsyncHtmlLoader, PyPDFDirectoryLoader, Docx2txtLoader,
+    UnstructuredMarkdownLoader, WikipediaLoader, ArxivLoader,
+    CSVLoader, GithubFileLoader
+)
 
 # Standard Python libraries
 import readline  # For interactive user input
@@ -14,8 +19,7 @@ import argparse
 import random  # For random operations used in selecting content
 from langchain.schema import Document  # Document schema for content storage
 
-# Configuration
-DEBUG_MODE = False  # Set to True to enable debugging output
+DEBUG_MODE = False
 
 # Wikipedia topics to load
 wiki_topics = [
@@ -43,26 +47,6 @@ urls = [
     "https://www.pdx.edu/computer-science/"
 ]
 
-# Document loading functions
-def load_documents_from_folder(folder_path):
-    """
-    Load documents from a specified folder.
-    Args:
-        folder_path (str): Path to the folder containing documents.
-    """
-    print(f"Loading documents from folder: {folder_path}...")
-    docs = DirectoryLoader(folder_path).load()
-    process_documents(docs)
-
-def load_urls(urls):
-    """
-    Load documents from a list of URLs asynchronously.
-    Args:
-        urls (list): List of URLs to load.
-    """
-    docs = AsyncHtmlLoader(urls).load()
-    process_documents(docs)
-
 def load_wikipedia_articles(query, max_docs=20):
     """
     Load Wikipedia articles based on a search query.
@@ -78,6 +62,24 @@ def load_wikipedia_articles(query, max_docs=20):
     else:
         print(f"No articles found for query: {query}")
 
+def load_urls(urls):
+    """
+    Load documents from a list of URLs asynchronously.
+    Args:
+        urls (list): List of URLs to load.
+    """
+    docs = AsyncHtmlLoader(urls).load()
+    process_documents(docs)
+def load_documents_from_folder(folder_path):
+    """
+    Load documents from a specified folder.
+    Args:
+        folder_path (str): Path to the folder containing documents.
+    """
+    print(f"Loading documents from folder: {folder_path}...")
+    docs = DirectoryLoader(folder_path).load()
+    process_documents(docs)
+    
 # Function for processing documents
 def process_documents(docs):
     """
@@ -88,14 +90,14 @@ def process_documents(docs):
     text_splitter = TokenTextSplitter(chunk_size=1000, chunk_overlap=100)
     chunks = text_splitter.split_documents(docs)
     vectorstore.add_documents(documents=chunks)
-# Load URLs and Wikipedia topics into vector store
+
 print(f"Loading URLs: {urls}")
 load_urls(urls)
 
 # Load predefined topics from Wikipedia
 for topic in wiki_topics:
     load_wikipedia_articles(topic, max_docs=5)
-# Set up the retriever, prompt, and LLM
+
 retriever = vectorstore.as_retriever()  # Setup retriever for document search
 prompt = hub.pull("rlm/rag-prompt")  # Pull prompt template from LangChain Hub
 llm = GoogleGenerativeAI(model="gemini-1.5-pro-latest", temperature=0.7)  # Initialize the LLM
@@ -117,14 +119,16 @@ rag_chain = (
     llm
 )
 
-# Interactive user session
+# Start interactive user session
 print("Welcome to the RAG app. Ask me a question, and I'll answer from my document database.")
 while True:
     user_input = input("prompt>> ")
-    if user_input == '':
+    if user_input.lower() == '':
         break
     if user_input:
         response = rag_chain.invoke(user_input)
         print(response)
         cache[user_input] = vectorstore.similarity_search(user_input)  # Store response in cache for future retrieval
+
+                                                                                                                                
 
