@@ -88,4 +88,11 @@ def process_documents(docs):
     text_splitter = TokenTextSplitter(chunk_size=1000, chunk_overlap=100)
     chunks = text_splitter.split_documents(docs)
     vectorstore.add_documents(documents=chunks)
+# Load URLs and Wikipedia topics into vector store
+print(f"Loading URLs: {urls}")
+load_urls(urls)
+
+# Load predefined topics from Wikipedia
+for topic in wiki_topics:
+    load_wikipedia_articles(topic, max_docs=5)
 
