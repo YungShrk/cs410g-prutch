@@ -17,3 +17,29 @@ from langchain.schema import Document  # Document schema for content storage
 # Configuration
 DEBUG_MODE = False  # Set to True to enable debugging output
 
+# Wikipedia topics to load
+wiki_topics = [
+    "Batman",
+    "Computer Science",
+    "AI",
+    "Video Games",
+    "South America"
+]
+
+# Initialize cache to store previous user queries and their relevant documents
+cache = {}
+
+# Initialize vector store using Chroma for storing and retrieving documents
+vectorstore = Chroma(
+    persist_directory="./rag_data/.chromadb",  # Path to store data persistently
+    embedding_function=GoogleGenerativeAIEmbeddings(
+        api_key=os.getenv("GOOGLE_API_KEY"), model="models/embedding-001"
+    )
+)
+
+# Load URLs to be processed
+urls = [
+    "https://www.pdx.edu/academics/programs/undergraduate/computer-science",
+    "https://www.pdx.edu/computer-science/"
+]
+
