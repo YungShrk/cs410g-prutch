@@ -95,4 +95,36 @@ load_urls(urls)
 # Load predefined topics from Wikipedia
 for topic in wiki_topics:
     load_wikipedia_articles(topic, max_docs=5)
+# Set up the retriever, prompt, and LLM
+retriever = vectorstore.as_retriever()  # Setup retriever for document search
+prompt = hub.pull("rlm/rag-prompt")  # Pull prompt template from LangChain Hub
+llm = GoogleGenerativeAI(model="gemini-1.5-pro-latest", temperature=0.7)  # Initialize the LLM
+
+def format_documents(docs):
+    """
+    Format documents for display.
+    Args:
+        docs (list): List of documents to format.
+    Returns:
+        str: Formatted document text.
+    """
+    return "\n\n".join(doc.page_content for doc in docs)
+
+# Set up the RAG processing chain
+rag_chain = (
+    {"context": retriever | format_documents, "question": RunnablePassthrough()} |
+    prompt |
+    llm
+)
+
+# Interactive user session
+print("Welcome to the RAG app. Ask me a question, and I'll answer from my document database.")
+while True:
+    user_input = input("prompt>> ")
+    if user_input == '':
+        break
+    if user_input:
+        response = rag_chain.invoke(user_input)
+        print(response)
+        cache[user_input] = vectorstore.similarity_search(user_input)  # Store response in cache for future retrieval
 
