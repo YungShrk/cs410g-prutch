@@ -82,6 +82,26 @@ def summarize_code(docs):
         summary = chain.invoke(doc.page_content)
         print(f"Summary for file {doc.metadata['source']}:\n{summary}\n")
 
+def analyze_code_for_vulnerabilities(docs):
+    """
+    Analyze Python code for potential vulnerabilities.
+    Args:
+        docs (list): List of Document objects containing Python code.
+    """
+    prompt = PromptTemplate.from_template("Analyze this Python code and list any potential vulnerabilities: {text}")
+    llm = hub.pull("openai/gpt-3")  # Replace with appropriate LLM
+
+    chain = (
+        {"text": RunnablePassthrough()} |
+        prompt |
+        llm |
+        RunnablePassthrough()
+    )
+
+    for doc in docs:
+        analysis = chain.invoke(doc.page_content)
+        print(f"Vulnerability Analysis for file {doc.metadata['source']}:\n{analysis}\n")
+
 if __name__ == "__main__":
     directory = "./sample_scripts"
     docs = load_python_files(directory)
