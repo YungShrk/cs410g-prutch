@@ -62,6 +62,26 @@ def process_documents(docs):
     chunks = text_splitter.split_documents(docs)
     vectorstore.add_documents(documents=chunks)
 
+def summarize_code(docs):
+    """
+    Summarize Python code to generate documentation.
+    Args:
+        docs (list): List of Document objects containing Python code.
+    """
+    prompt = PromptTemplate.from_template("Summarize this Python code: {text}")
+    llm = hub.pull("openai/gpt-3")  # Replace with appropriate LLM
+
+    chain = (
+        {"text": RunnablePassthrough()} |
+        prompt |
+        llm |
+        RunnablePassthrough()
+    )
+
+    for doc in docs:
+        summary = chain.invoke(doc.page_content)
+        print(f"Summary for file {doc.metadata['source']}:\n{summary}\n")
+
 if __name__ == "__main__":
     directory = "./sample_scripts"
     docs = load_python_files(directory)
