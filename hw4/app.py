@@ -1,4 +1,4 @@
-from langchain import hub  # LangChain Hub for loading prompt templates
+from langchain_google_genai import GoogleGenerativeAI, GoogleGenerativeAIEmbeddings  # Google Generative AI wrapper for LLM and embeddings
 from langchain.text_splitter import TokenTextSplitter  # Alternative text splitter for handling documents
 from langchain_chroma import Chroma  # Updated import path for Chroma vector storage
 from langchain_core.output_parsers import StrOutputParser  # Output parser for formatting LLM responses
@@ -8,10 +8,9 @@ from langchain_google_genai import GoogleGenerativeAI, GoogleGenerativeAIEmbeddi
 from langchain_community.document_loaders import (
     AsyncHtmlLoader, PyPDFDirectoryLoader, Docx2txtLoader,
     UnstructuredMarkdownLoader, WikipediaLoader, ArxivLoader,
-    CSVLoader, GithubFileLoader, GenericLoader
+    CSVLoader, GithubFileLoader
 )
-from langchain.parsers import LanguageParser
-from langchain import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 
 # Standard Python libraries
 import readline  # For interactive user input
@@ -21,6 +20,7 @@ import argparse
 import random  # For random operations used in selecting content
 from langchain.schema import Document  # Document schema for content storage
 
+# ---------------------------------- CONFIGURATION AND INITIALIZATION ----------------------------------
 DEBUG_MODE = False  # Set to True to enable debugging output
 
 # Initialize cache to store previous user queries and their relevant documents
@@ -34,6 +34,7 @@ vectorstore = Chroma(
     )
 )
 
+# ---------------------------------- DOCUMENT LOADING FUNCTIONS ----------------------------------
 def load_python_files(directory):
     """
     Load Python files from a specified directory.
@@ -42,13 +43,13 @@ def load_python_files(directory):
     Returns:
         list: List of document objects.
     """
-    loader = GenericLoader.from_filesystem(
-        directory,
-        glob="*",
-        suffixes=[".py"],
-        parser=LanguageParser()
-    )
-    docs = loader.load()
+    docs = []
+    for root, _, files in os.walk(directory):
+        for file in files:
+            if file.endswith('.py'):
+                file_path = os.path.join(root, file)
+                loader = UnstructuredMarkdownLoader(file_path)
+                docs.extend(loader.load())
     return docs
 
 # Function for processing documents
@@ -62,6 +63,7 @@ def process_documents(docs):
     chunks = text_splitter.split_documents(docs)
     vectorstore.add_documents(documents=chunks)
 
+# ---------------------------------- SUMMARIZATION FUNCTION ----------------------------------
 def summarize_code(docs):
     """
     Summarize Python code to generate documentation.
@@ -69,7 +71,7 @@ def summarize_code(docs):
         docs (list): List of Document objects containing Python code.
     """
     prompt = PromptTemplate.from_template("Summarize this Python code: {text}")
-    llm = hub.pull("openai/gpt-3")  # Replace with appropriate LLM
+    llm = GoogleGenerativeAI(model="gemini-1.5-pro-latest", temperature=0.7)  # Initialize Google Gemini LLM
 
     chain = (
         {"text": RunnablePassthrough()} |
@@ -82,6 +84,7 @@ def summarize_code(docs):
         summary = chain.invoke(doc.page_content)
         print(f"Summary for file {doc.metadata['source']}:\n{summary}\n")
 
+# ---------------------------------- ANALYSIS FUNCTION ----------------------------------
 def analyze_code_for_vulnerabilities(docs):
     """
     Analyze Python code for potential vulnerabilities.
@@ -89,7 +92,7 @@ def analyze_code_for_vulnerabilities(docs):
         docs (list): List of Document objects containing Python code.
     """
     prompt = PromptTemplate.from_template("Analyze this Python code and list any potential vulnerabilities: {text}")
-    llm = hub.pull("openai/gpt-3")  # Replace with appropriate LLM
+    llm = GoogleGenerativeAI(model="gemini-1.5-pro-latest", temperature=0.7)  # Initialize Google Gemini LLM
 
     chain = (
         {"text": RunnablePassthrough()} |
@@ -102,6 +105,7 @@ def analyze_code_for_vulnerabilities(docs):
         analysis = chain.invoke(doc.page_content)
         print(f"Vulnerability Analysis for file {doc.metadata['source']}:\n{analysis}\n")
 
+# ---------------------------------- DEOBFUSCATION FUNCTION ----------------------------------
 def deobfuscate_code(docs):
     """
     Deobfuscate obfuscated Python code.
@@ -109,8 +113,8 @@ def deobfuscate_code(docs):
         docs (list): List of Document objects containing obfuscated Python code.
     """
     prompt = PromptTemplate.from_template("Deobfuscate the following Python code: {text}")
-    llm = hub.pull("openai/gpt-3")  # Replace with appropriate LLM
-
+    llm = GoogleGenerativeAI(model="gemini-1.5-pro-latest", temperature=0.7)
+   
     chain = (
         {"text": RunnablePassthrough()} |
         prompt |
@@ -122,6 +126,7 @@ def deobfuscate_code(docs):
         deobfuscated_code = chain.invoke(doc.page_content)
         print(f"Deobfuscated Code for file {doc.metadata['source']}:\n{deobfuscated_code}\n")
 
+# ---------------------------------- MAIN CLI APPLICATION ----------------------------------
 def main():
     parser = argparse.ArgumentParser(description="LangChain Reverse Engineering Tool")
     parser.add_argument('--task', type=str, required=True, choices=['summarize', 'analyze', 'deobfuscate'], help='Task to perform')
@@ -138,3 +143,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
