@@ -102,8 +102,39 @@ def analyze_code_for_vulnerabilities(docs):
         analysis = chain.invoke(doc.page_content)
         print(f"Vulnerability Analysis for file {doc.metadata['source']}:\n{analysis}\n")
 
-if __name__ == "__main__":
-    directory = "./sample_scripts"
-    docs = load_python_files(directory)
-    print(f"Loaded {len(docs)} Python files.")
+def deobfuscate_code(docs):
+    """
+    Deobfuscate obfuscated Python code.
+    Args:
+        docs (list): List of Document objects containing obfuscated Python code.
+    """
+    prompt = PromptTemplate.from_template("Deobfuscate the following Python code: {text}")
+    llm = hub.pull("openai/gpt-3")  # Replace with appropriate LLM
 
+    chain = (
+        {"text": RunnablePassthrough()} |
+        prompt |
+        llm |
+        RunnablePassthrough()
+    )
+
+    for doc in docs:
+        deobfuscated_code = chain.invoke(doc.page_content)
+        print(f"Deobfuscated Code for file {doc.metadata['source']}:\n{deobfuscated_code}\n")
+
+def main():
+    parser = argparse.ArgumentParser(description="LangChain Reverse Engineering Tool")
+    parser.add_argument('--task', type=str, required=True, choices=['summarize', 'analyze', 'deobfuscate'], help='Task to perform')
+
+    args = parser.parse_args()
+    docs = load_python_files("./sample_scripts")
+
+    if args.task == 'summarize':
+        summarize_code(docs)
+    elif args.task == 'analyze':
+        analyze_code_for_vulnerabilities(docs)
+    elif args.task == 'deobfuscate':
+        deobfuscate_code(docs)
+
+if __name__ == "__main__":
+    main()
