@@ -42,9 +42,15 @@ def process_documents(docs):
     Args:
         docs (list): List of Document objects to process.
     """
+    if not docs:
+        print("No documents found to process. Please check the directory and file extension.")
+        return
     text_splitter = TokenTextSplitter(chunk_size=1000, chunk_overlap=100)
     chunks = text_splitter.split_documents(docs)
-    vectorstore.add_documents(documents=chunks)
+    if chunks:
+        vectorstore.add_documents(documents=chunks)
+    else:
+        print("No chunks created from documents. Please verify the content.")
 
 def analyze_code_for_vulnerabilities(docs):
     """
@@ -52,6 +58,9 @@ def analyze_code_for_vulnerabilities(docs):
     Args:
         docs (list): List of Document objects containing code.
     """
+    if not docs:
+        print("No documents available for analysis. Please check the input directory.")
+        return
     prompt = PromptTemplate.from_template("Analyze this code and list any potential vulnerabilities: {text}")
     llm = GoogleGenerativeAI(model="gemini-1.5-pro-latest", temperature=0.7)
 
@@ -62,18 +71,25 @@ def analyze_code_for_vulnerabilities(docs):
         RunnablePassthrough()
     )
     for doc in docs:
-        analysis = chain.invoke(doc.page_content)
-        print(f"Vulnerability Analysis for file {doc.metadata['source']}:\n{analysis}\n")
+        try:
+            analysis = chain.invoke(doc.page_content)
+            print(f"Vulnerability Analysis for file {doc.metadata['source']}:\n{analysis}\n")
+        except Exception as e:
+            print(f"Error analyzing file {doc.metadata['source']}: {e}")
 
 def main():
     parser = argparse.ArgumentParser(description="Vulnerability Scanner using LangChain")
     parser.add_argument('--task', type=str, required=True, choices=['analyze'], help='Task to perform')
     parser.add_argument('--directory', type=str, required=True, help='Directory to scan for code files')
-    parser.add_argument('--file_extension', type=str, default='.php', help='Code file extension to scan (e.g., .py, .php)')
+    parser.add_argument('--file_extension', type=str, default='.py', help='Code file extension to scan (e.g., .py, .php)')
     args = parser.parse_args()
 
     docs = load_code_files(args.directory, args.file_extension)
-    process_documents(docs)
+    if docs:
+        process_documents(docs)
+    else:
+        print("No documents loaded. Please check the directory path and file extension.")
+        return
 
     if args.task == 'analyze':
         analyze_code_for_vulnerabilities(docs)
