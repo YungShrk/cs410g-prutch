@@ -1,4 +1,3 @@
-# Import necessary modules for LangChain, including GoogleGenerativeAI for LLM and embeddings
 from langchain_google_genai import GoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from langchain.text_splitter import TokenTextSplitter
 from langchain_chroma import Chroma
@@ -10,7 +9,7 @@ import os
 import subprocess
 
 # ---------------- CONFIGURATION ----------------
-DEBUG_MODE = False  # Set to True to enable debugging output
+DEBUG_MODE = True  # Set to True to enable debugging output
 COMMAND_TIMEOUT = 60  # Timeout for command execution in seconds
 
 # Initialize vector store for storing and retrieving documents
@@ -37,8 +36,11 @@ def generate_command(task_description):
     chain = ({"text": RunnablePassthrough()} | prompt | llm | RunnablePassthrough())
 
     command = chain.invoke(task_description)
+    
+    # Ensure command starts with 'sudo' and strip unwanted markdown formatting
+    command = command.replace('sudo', 'sudo').replace('```bash', '').replace('```', '').strip()
+    
     return command
-
 
 def execute_command(command):
     """
@@ -48,6 +50,8 @@ def execute_command(command):
     Returns:
         str: The output of the command.
     """
+    if DEBUG_MODE:
+        print(f"Executing Command: {command}")
     try:
         result = subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=COMMAND_TIMEOUT)
         return result.stdout.decode('utf-8')
@@ -55,7 +59,6 @@ def execute_command(command):
         return "Error: Command timed out."
     except subprocess.CalledProcessError as e:
         return f"Error executing command: {e.stderr.decode('utf-8')}"
-
 
 def automate_tool_usage(task_descriptions):
     """
@@ -65,11 +68,10 @@ def automate_tool_usage(task_descriptions):
     """
     for task in task_descriptions:
         print(f"Task: {task}")
-        command = generate_command(task)
+        task_with_sudo = f"sudo {task}"
+        command = generate_command(task_with_sudo)
         print(f"Generated Command: {command}")
-        if "tcpdump" in command or "nikto" in command or "dnsenum" in command:
-            command = f"sudo {command}"
-            print("Note: The generated command may require elevated privileges (e.g., using 'sudo').")
+        
         output = execute_command(command)
         print(f"Command Output:\n{output}\n")
 
@@ -95,7 +97,6 @@ def load_man_pages(tool_list):
         text_splitter = TokenTextSplitter(chunk_size=1000, chunk_overlap=100)
         chunks = text_splitter.split_documents(docs)
         vectorstore.add_documents(documents=chunks)
-
 
 def inform_command_with_rag(command_query):
     """
@@ -123,7 +124,7 @@ def main():
     # Define a list of task descriptions for command generation
     task_descriptions = [
         "Capture network packets using tcpdump for 30 seconds",
-        "Perform a vulnerability scan using nikto on the target IP 10.x.y.z",
+        "Perform a vulnerability scan using nikto on the target IP 10.138.0.2",
         "Enumerate DNS information for the domain example.com using dnsenum"
     ]
 
