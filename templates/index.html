@@ -4,7 +4,11 @@
     <title>RAG Query App</title>
 </head>
 <body>
-    <h1>Ask a Security Question</h1>
+    {% if github_username %}
+        <h1>Welcome, {{ github_username }}!</h1>
+    {% else %}
+        <h1>Ask a Security Question</h1>
+    {% endif %}
     <form method="POST">
         <input type="text" name="query" placeholder="Enter your query">
         <button type="submit">Submit</button>

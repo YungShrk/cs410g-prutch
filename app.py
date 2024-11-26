@@ -2,7 +2,7 @@ from flask import Flask, redirect, url_for, render_template, request
 from flask_dance.contrib.github import make_github_blueprint, github
 
 app = Flask(__name__)
-app.secret_key = "Ov23lia1LKASrU3jWUj3"  # REPLACE with a strong random key
+app.secret_key = "4199d85f133f24efeef018c32eb56ab2b2513cdf109fcc18"  # REPLACE with a strong random key
 blueprint = make_github_blueprint(
     client_id="Ov23lia1LKASrU3jWUj3",  # REPLACE
     client_secret="621b857fc3b0d3e13204458e0c430938aca34279",  # REPLACE
