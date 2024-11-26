@@ -19,3 +19,5 @@ asyncio
 scikit-learn
 unstructured
 validators
+Flask
+Flask-Dance
