@@ -56,9 +56,9 @@ def create_app():
             return render_template("index.html", query=query, result=result, github_username=resp.json()["login"])
         return render_template("index.html", github_username=resp.json()["login"])
 
+    fuzz_query_rag(app=app, num_tests=10, max_length=20)  # fuzz before run
     return app
 
 if __name__ == "__main__":
     app = create_app()
-    fuzz_query_rag(app=app)  # Pass the app instance to the fuzzer
     app.run(host='0.0.0.0', port=80, debug=True)
