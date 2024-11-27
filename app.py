@@ -10,11 +10,25 @@ def create_app():
     )
     app.register_blueprint(blueprint, url_prefix="/login")
 
-    # Placeholder for your RAG functionality
+import random
+import string
+
+    # Fuzzing functionality for RAG
+    def fuzz_query_rag(num_tests=100, max_length=100):
+        for _ in range(num_tests):
+            try:
+                random_query = ''.join(random.choice(string.printable) for _ in range(random.randint(0, max_length)))
+                result = query_rag(random_query)
+                # Check for unexpected results here (e.g., empty strings, exceptions)
+                if not result:
+                    print(f"Potential issue with query: {random_query}. Empty result.")
+
+            except Exception as e:
+                print(f"Exception raised with query: {random_query}. Exception: {e}")
+
+
     def query_rag(query):
-        # TODO: Implement your RAG query logic here
-        # This should load relevant documents, process the query,
-        # and return the answer.
+        # TODO: Implement your actual RAG query logic here
         return "RAG query result for: " + query
 
 
@@ -63,4 +77,5 @@ def create_app():
     return app
 
 if __name__ == "__main__":
+    fuzz_query_rag()  # Run the fuzzer before starting the app
     create_app().run(host='0.0.0.0', port=80, debug=True)
