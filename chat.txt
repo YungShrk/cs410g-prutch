@@ -1,0 +1,14 @@
+User: Change get_factorial() to use math.factorial
+
+Assistant: To make this change we need to modify `mathweb/flask/app.py` to:
+
+1. Import the math package.
+2. Remove the existing factorial() function.
+3. Update get_factorial() to call math.factorial instead.
+
+Here are the *SEARCH/REPLACE* blocks:
+
+```
+mathweb/flask/app.py
+<<<<<<< SEARCH
+from flask import Flask
